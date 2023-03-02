@@ -1,0 +1,3 @@
+source [get_property REPOSITORY [get_ipdefs *dfx_controller:1.0]]/xilinx/dfx_controller_v1_0/tcl/api.tcl –notrace​
+
+
