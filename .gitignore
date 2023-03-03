@@ -1,1 +1,6 @@
 vivado_project/*
+*.str
+*.log
+*.jou
+.Xil/*
+hd_visual/*
