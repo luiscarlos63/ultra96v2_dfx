@@ -176,7 +176,6 @@ int main()
 
 	u32 	  * pcapCtrlPtr 	= (u32*)0x00FFCA3008;
 	u_int32_t * hw32_vptr	 	= (u_int32_t*)0xA0000000;
-	u_int32_t * hw32_vptr_6000 	= (u_int32_t*)0x60000000;
 	u_int32_t  	addred = 0;
 	u_int32_t  	my_value = 0;
 	int command = 0;
@@ -355,8 +354,6 @@ int main()
 		printf("\n7 - add 35");
 		printf("\n8 - mult 5");
 		printf("\n9 - mult 50");
-		printf("\n10 - write to 6000");
-		printf("\n11 - read from 6000");
 		printf("\nOption: ");
 		scanf("%d", &command);
 
@@ -459,29 +456,6 @@ int main()
 
 				mult_loading=1; rm_loading=1;
 				break;
-
-
-			case 10:// Write to position 0 of AXI
-				//get addr
-				printf("\nQual e o addr: ");
-				scanf("%X", &addred);
-
-				//get value
-
-				printf("\nQual e o value: ");
-				scanf("%X", &my_value );
-
-				hw32_vptr_6000[addred/4] = my_value;
-				break;
-
-			case 11:
-				//get addr
-				printf("\nQual e o addr: ");
-				scanf("%X", &addred);
-
-				//print
-				printf("\nO valor em memoria e: %x\n", hw32_vptr_6000[addred/4]);
-				break;
 		default: break;
 			//return 0;
 		}	// end of "switch(command)"
@@ -489,13 +463,13 @@ int main()
 
 		while (rm_loading) {
 
-			if (const_loading==1)
+			if (const_loading == 1)
 			{
 				prc_status=XPrc_ReadStatusReg(&Prc, XDFXC_VS_CONST_ID);
-			}else if(add_loading==1)
+			}else if(add_loading == 1)
 					{
 						prc_status=XPrc_ReadStatusReg(&Prc, XDFXC_VS_ADD_ID);
-					}else
+					}else //(mult_loading == 1)
 					{
 						prc_status=XPrc_ReadStatusReg(&Prc, XDFXC_VS_MULT_ID);
 					}
@@ -562,4 +536,3 @@ int main()
     cleanup_platform();
     return 0;
 }
-
