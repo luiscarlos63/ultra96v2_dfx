@@ -229,6 +229,356 @@ set obj [get_filesets utils_1]
 # Adding sources referenced in BDs, if not already added
 
 
+# Proc to create BD rp_mult_rm50
+proc cr_bd_rp_mult_rm50 { parentCell } {
+
+  # CHANGE DESIGN NAME HERE
+  set design_name rp_mult_rm50
+
+  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
+
+  create_bd_design $design_name
+
+  set bCheckIPsPassed 1
+  ##################################################################
+  # CHECK IPs
+  ##################################################################
+  set bCheckIPs 1
+  if { $bCheckIPs == 1 } {
+     set list_check_ips "\ 
+  xilinx.com:ip:mult_gen:12.0\
+  xilinx.com:ip:xlconstant:1.1\
+  "
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+  }
+
+  if { $bCheckIPsPassed != 1 } {
+    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+    return 3
+  }
+
+  variable script_folder
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+
+  # Create ports
+  set A [ create_bd_port -dir I -from 15 -to 0 -type data A ]
+  set_property -dict [ list \
+   CONFIG.LAYERED_METADATA {undef} \
+ ] $A
+  set CLK [ create_bd_port -dir I -type clk -freq_hz 100000000 CLK ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_CLKEN {ce} \
+   CONFIG.CLK_DOMAIN {design_1_zynq_ultra_ps_e_0_0_pl_clk0} \
+   CONFIG.FREQ_TOLERANCE_HZ {0} \
+   CONFIG.INSERT_VIP {0} \
+   CONFIG.PHASE {0.0} \
+ ] $CLK
+  set P [ create_bd_port -dir O -from 35 -to 0 -type data P ]
+  set_property -dict [ list \
+   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
+ ] $P
+
+  # Create instance: mult_gen_0, and set properties
+  set mult_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:mult_gen:12.0 mult_gen_0 ]
+
+  # Create instance: xlconstant_0, and set properties
+  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {50} \
+   CONFIG.CONST_WIDTH {16} \
+ ] $xlconstant_0
+
+  # Create port connections
+  connect_bd_net -net A_1 [get_bd_ports A] [get_bd_pins mult_gen_0/A]
+  connect_bd_net -net CLK_1 [get_bd_ports CLK] [get_bd_pins mult_gen_0/CLK]
+  connect_bd_net -net mult_gen_0_P [get_bd_ports P] [get_bd_pins mult_gen_0/P]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins mult_gen_0/B] [get_bd_pins xlconstant_0/dout]
+
+  # Create address segments
+
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+
+  validate_bd_design
+  save_bd_design
+  close_bd_design $design_name 
+}
+# End of cr_bd_rp_mult_rm50()
+cr_bd_rp_mult_rm50 ""
+set_property REGISTERED_WITH_MANAGER "1" [get_files rp_mult_rm50.bd ] 
+set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_mult_rm50.bd ] 
+
+
+
+# Proc to create BD rp_const_rm35
+proc cr_bd_rp_const_rm35 { parentCell } {
+
+  # CHANGE DESIGN NAME HERE
+  set design_name rp_const_rm35
+
+  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
+
+  create_bd_design $design_name
+
+  set bCheckIPsPassed 1
+  ##################################################################
+  # CHECK IPs
+  ##################################################################
+  set bCheckIPs 1
+  if { $bCheckIPs == 1 } {
+     set list_check_ips "\ 
+  xilinx.com:ip:xlconstant:1.1\
+  "
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+  }
+
+  if { $bCheckIPsPassed != 1 } {
+    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+    return 3
+  }
+
+  variable script_folder
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+
+  # Create ports
+  set dout [ create_bd_port -dir O -from 7 -to 0 dout ]
+
+  # Create instance: xlconstant_0, and set properties
+  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {0x37} \
+   CONFIG.CONST_WIDTH {8} \
+ ] $xlconstant_0
+
+  # Create port connections
+  connect_bd_net -net xlconstant_0_dout [get_bd_ports dout] [get_bd_pins xlconstant_0/dout]
+
+  # Create address segments
+
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+
+  validate_bd_design
+  save_bd_design
+  close_bd_design $design_name 
+}
+# End of cr_bd_rp_const_rm35()
+cr_bd_rp_const_rm35 ""
+set_property REGISTERED_WITH_MANAGER "1" [get_files rp_const_rm35.bd ] 
+set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_const_rm35.bd ] 
+
+
+
+# Proc to create BD rp_add_rm65
+proc cr_bd_rp_add_rm65 { parentCell } {
+
+  # CHANGE DESIGN NAME HERE
+  set design_name rp_add_rm65
+
+  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
+
+  create_bd_design $design_name
+
+  set bCheckIPsPassed 1
+  ##################################################################
+  # CHECK IPs
+  ##################################################################
+  set bCheckIPs 1
+  if { $bCheckIPs == 1 } {
+     set list_check_ips "\ 
+  xilinx.com:ip:c_addsub:12.0\
+  xilinx.com:ip:xlconstant:1.1\
+  "
+
+   set list_ips_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
+
+   foreach ip_vlnv $list_check_ips {
+      set ip_obj [get_ipdefs -all $ip_vlnv]
+      if { $ip_obj eq "" } {
+         lappend list_ips_missing $ip_vlnv
+      }
+   }
+
+   if { $list_ips_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
+      set bCheckIPsPassed 0
+   }
+
+  }
+
+  if { $bCheckIPsPassed != 1 } {
+    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
+    return 3
+  }
+
+  variable script_folder
+
+  if { $parentCell eq "" } {
+     set parentCell [get_bd_cells /]
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+
+  # Create interface ports
+
+  # Create ports
+  set A [ create_bd_port -dir I -from 35 -to 0 -type data A ]
+  set_property -dict [ list \
+   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
+ ] $A
+  set CLK [ create_bd_port -dir I -type clk -freq_hz 100000000 CLK ]
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_CLKEN {CE} \
+   CONFIG.CLK_DOMAIN {design_1_zynq_ultra_ps_e_0_0_pl_clk0} \
+   CONFIG.FREQ_TOLERANCE_HZ {0} \
+   CONFIG.INSERT_VIP {0} \
+   CONFIG.PHASE {0.0} \
+ ] $CLK
+  set S [ create_bd_port -dir O -from 35 -to 0 -type data S ]
+  set_property -dict [ list \
+   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
+ ] $S
+
+  # Create instance: c_addsub_0, and set properties
+  set c_addsub_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_addsub:12.0 c_addsub_0 ]
+  set_property -dict [ list \
+   CONFIG.CE {false} \
+ ] $c_addsub_0
+
+  # Create instance: xlconstant_0, and set properties
+  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
+  set_property -dict [ list \
+   CONFIG.CONST_VAL {65} \
+   CONFIG.CONST_WIDTH {32} \
+ ] $xlconstant_0
+
+  # Create port connections
+  connect_bd_net -net A_1 [get_bd_ports A] [get_bd_pins c_addsub_0/A]
+  connect_bd_net -net CLK_1 [get_bd_ports CLK] [get_bd_pins c_addsub_0/CLK]
+  connect_bd_net -net c_addsub_0_S [get_bd_ports S] [get_bd_pins c_addsub_0/S]
+  connect_bd_net -net xlconstant_0_dout [get_bd_pins c_addsub_0/B] [get_bd_pins xlconstant_0/dout]
+
+  # Create address segments
+
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+
+  validate_bd_design
+  save_bd_design
+  close_bd_design $design_name 
+}
+# End of cr_bd_rp_add_rm65()
+cr_bd_rp_add_rm65 ""
+set_property REGISTERED_WITH_MANAGER "1" [get_files rp_add_rm65.bd ] 
+set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_add_rm65.bd ] 
+
+
+
 # Proc to create BD rp_mult_rm5
 proc cr_bd_rp_mult_rm5 { parentCell } {
 
@@ -555,356 +905,6 @@ cr_bd_rp_add_rm25 ""
 set_property REGISTERED_WITH_MANAGER "1" [get_files rp_add_rm25.bd ] 
 set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_add_rm25.bd ] 
 
-
-
-# Proc to create BD rp_add_rm65
-proc cr_bd_rp_add_rm65 { parentCell } {
-
-  # CHANGE DESIGN NAME HERE
-  set design_name rp_add_rm65
-
-  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
-
-  create_bd_design $design_name
-
-  set bCheckIPsPassed 1
-  ##################################################################
-  # CHECK IPs
-  ##################################################################
-  set bCheckIPs 1
-  if { $bCheckIPs == 1 } {
-     set list_check_ips "\ 
-  xilinx.com:ip:c_addsub:12.0\
-  xilinx.com:ip:xlconstant:1.1\
-  "
-
-   set list_ips_missing ""
-   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
-
-   foreach ip_vlnv $list_check_ips {
-      set ip_obj [get_ipdefs -all $ip_vlnv]
-      if { $ip_obj eq "" } {
-         lappend list_ips_missing $ip_vlnv
-      }
-   }
-
-   if { $list_ips_missing ne "" } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
-      set bCheckIPsPassed 0
-   }
-
-  }
-
-  if { $bCheckIPsPassed != 1 } {
-    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
-    return 3
-  }
-
-  variable script_folder
-
-  if { $parentCell eq "" } {
-     set parentCell [get_bd_cells /]
-  }
-
-  # Get object for parentCell
-  set parentObj [get_bd_cells $parentCell]
-  if { $parentObj == "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
-     return
-  }
-
-  # Make sure parentObj is hier blk
-  set parentType [get_property TYPE $parentObj]
-  if { $parentType ne "hier" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
-     return
-  }
-
-  # Save current instance; Restore later
-  set oldCurInst [current_bd_instance .]
-
-  # Set parent object as current
-  current_bd_instance $parentObj
-
-
-  # Create interface ports
-
-  # Create ports
-  set A [ create_bd_port -dir I -from 35 -to 0 -type data A ]
-  set_property -dict [ list \
-   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
- ] $A
-  set CLK [ create_bd_port -dir I -type clk -freq_hz 100000000 CLK ]
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_CLKEN {CE} \
-   CONFIG.CLK_DOMAIN {design_1_zynq_ultra_ps_e_0_0_pl_clk0} \
-   CONFIG.FREQ_TOLERANCE_HZ {0} \
-   CONFIG.INSERT_VIP {0} \
-   CONFIG.PHASE {0.0} \
- ] $CLK
-  set S [ create_bd_port -dir O -from 35 -to 0 -type data S ]
-  set_property -dict [ list \
-   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
- ] $S
-
-  # Create instance: c_addsub_0, and set properties
-  set c_addsub_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:c_addsub:12.0 c_addsub_0 ]
-  set_property -dict [ list \
-   CONFIG.CE {false} \
- ] $c_addsub_0
-
-  # Create instance: xlconstant_0, and set properties
-  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-  set_property -dict [ list \
-   CONFIG.CONST_VAL {65} \
-   CONFIG.CONST_WIDTH {32} \
- ] $xlconstant_0
-
-  # Create port connections
-  connect_bd_net -net A_1 [get_bd_ports A] [get_bd_pins c_addsub_0/A]
-  connect_bd_net -net CLK_1 [get_bd_ports CLK] [get_bd_pins c_addsub_0/CLK]
-  connect_bd_net -net c_addsub_0_S [get_bd_ports S] [get_bd_pins c_addsub_0/S]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins c_addsub_0/B] [get_bd_pins xlconstant_0/dout]
-
-  # Create address segments
-
-
-  # Restore current instance
-  current_bd_instance $oldCurInst
-
-  validate_bd_design
-  save_bd_design
-  close_bd_design $design_name 
-}
-# End of cr_bd_rp_add_rm65()
-cr_bd_rp_add_rm65 ""
-set_property REGISTERED_WITH_MANAGER "1" [get_files rp_add_rm65.bd ] 
-set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_add_rm65.bd ] 
-
-
-
-# Proc to create BD rp_const_rm35
-proc cr_bd_rp_const_rm35 { parentCell } {
-
-  # CHANGE DESIGN NAME HERE
-  set design_name rp_const_rm35
-
-  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
-
-  create_bd_design $design_name
-
-  set bCheckIPsPassed 1
-  ##################################################################
-  # CHECK IPs
-  ##################################################################
-  set bCheckIPs 1
-  if { $bCheckIPs == 1 } {
-     set list_check_ips "\ 
-  xilinx.com:ip:xlconstant:1.1\
-  "
-
-   set list_ips_missing ""
-   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
-
-   foreach ip_vlnv $list_check_ips {
-      set ip_obj [get_ipdefs -all $ip_vlnv]
-      if { $ip_obj eq "" } {
-         lappend list_ips_missing $ip_vlnv
-      }
-   }
-
-   if { $list_ips_missing ne "" } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
-      set bCheckIPsPassed 0
-   }
-
-  }
-
-  if { $bCheckIPsPassed != 1 } {
-    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
-    return 3
-  }
-
-  variable script_folder
-
-  if { $parentCell eq "" } {
-     set parentCell [get_bd_cells /]
-  }
-
-  # Get object for parentCell
-  set parentObj [get_bd_cells $parentCell]
-  if { $parentObj == "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
-     return
-  }
-
-  # Make sure parentObj is hier blk
-  set parentType [get_property TYPE $parentObj]
-  if { $parentType ne "hier" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
-     return
-  }
-
-  # Save current instance; Restore later
-  set oldCurInst [current_bd_instance .]
-
-  # Set parent object as current
-  current_bd_instance $parentObj
-
-
-  # Create interface ports
-
-  # Create ports
-  set dout [ create_bd_port -dir O -from 7 -to 0 dout ]
-
-  # Create instance: xlconstant_0, and set properties
-  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-  set_property -dict [ list \
-   CONFIG.CONST_VAL {0x37} \
-   CONFIG.CONST_WIDTH {8} \
- ] $xlconstant_0
-
-  # Create port connections
-  connect_bd_net -net xlconstant_0_dout [get_bd_ports dout] [get_bd_pins xlconstant_0/dout]
-
-  # Create address segments
-
-
-  # Restore current instance
-  current_bd_instance $oldCurInst
-
-  validate_bd_design
-  save_bd_design
-  close_bd_design $design_name 
-}
-# End of cr_bd_rp_const_rm35()
-cr_bd_rp_const_rm35 ""
-set_property REGISTERED_WITH_MANAGER "1" [get_files rp_const_rm35.bd ] 
-set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_const_rm35.bd ] 
-
-
-
-# Proc to create BD rp_mult_rm50
-proc cr_bd_rp_mult_rm50 { parentCell } {
-
-  # CHANGE DESIGN NAME HERE
-  set design_name rp_mult_rm50
-
-  common::send_gid_msg -ssname BD::TCL -id 2010 -severity "INFO" "Currently there is no design <$design_name> in project, so creating one..."
-
-  create_bd_design $design_name
-
-  set bCheckIPsPassed 1
-  ##################################################################
-  # CHECK IPs
-  ##################################################################
-  set bCheckIPs 1
-  if { $bCheckIPs == 1 } {
-     set list_check_ips "\ 
-  xilinx.com:ip:mult_gen:12.0\
-  xilinx.com:ip:xlconstant:1.1\
-  "
-
-   set list_ips_missing ""
-   common::send_gid_msg -ssname BD::TCL -id 2011 -severity "INFO" "Checking if the following IPs exist in the project's IP catalog: $list_check_ips ."
-
-   foreach ip_vlnv $list_check_ips {
-      set ip_obj [get_ipdefs -all $ip_vlnv]
-      if { $ip_obj eq "" } {
-         lappend list_ips_missing $ip_vlnv
-      }
-   }
-
-   if { $list_ips_missing ne "" } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2012 -severity "ERROR" "The following IPs are not found in the IP Catalog:\n  $list_ips_missing\n\nResolution: Please add the repository containing the IP(s) to the project." }
-      set bCheckIPsPassed 0
-   }
-
-  }
-
-  if { $bCheckIPsPassed != 1 } {
-    common::send_gid_msg -ssname BD::TCL -id 2023 -severity "WARNING" "Will not continue with creation of design due to the error(s) above."
-    return 3
-  }
-
-  variable script_folder
-
-  if { $parentCell eq "" } {
-     set parentCell [get_bd_cells /]
-  }
-
-  # Get object for parentCell
-  set parentObj [get_bd_cells $parentCell]
-  if { $parentObj == "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
-     return
-  }
-
-  # Make sure parentObj is hier blk
-  set parentType [get_property TYPE $parentObj]
-  if { $parentType ne "hier" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
-     return
-  }
-
-  # Save current instance; Restore later
-  set oldCurInst [current_bd_instance .]
-
-  # Set parent object as current
-  current_bd_instance $parentObj
-
-
-  # Create interface ports
-
-  # Create ports
-  set A [ create_bd_port -dir I -from 15 -to 0 -type data A ]
-  set_property -dict [ list \
-   CONFIG.LAYERED_METADATA {undef} \
- ] $A
-  set CLK [ create_bd_port -dir I -type clk -freq_hz 100000000 CLK ]
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_CLKEN {ce} \
-   CONFIG.CLK_DOMAIN {design_1_zynq_ultra_ps_e_0_0_pl_clk0} \
-   CONFIG.FREQ_TOLERANCE_HZ {0} \
-   CONFIG.INSERT_VIP {0} \
-   CONFIG.PHASE {0.0} \
- ] $CLK
-  set P [ create_bd_port -dir O -from 35 -to 0 -type data P ]
-  set_property -dict [ list \
-   CONFIG.LAYERED_METADATA {xilinx.com:interface:datatypes:1.0 {DATA {datatype {name {attribs {resolve_type immediate dependency {} format string minimum {} maximum {}} value data} bitwidth {attribs {resolve_type generated dependency bitwidth format long minimum {} maximum {}} value 36} bitoffset {attribs {resolve_type immediate dependency {} format long minimum {} maximum {}} value 0} integer {signed {attribs {resolve_type generated dependency signed format bool minimum {} maximum {}} value TRUE}}}} DATA_WIDTH 36}} \
- ] $P
-
-  # Create instance: mult_gen_0, and set properties
-  set mult_gen_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:mult_gen:12.0 mult_gen_0 ]
-
-  # Create instance: xlconstant_0, and set properties
-  set xlconstant_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:1.1 xlconstant_0 ]
-  set_property -dict [ list \
-   CONFIG.CONST_VAL {50} \
-   CONFIG.CONST_WIDTH {16} \
- ] $xlconstant_0
-
-  # Create port connections
-  connect_bd_net -net A_1 [get_bd_ports A] [get_bd_pins mult_gen_0/A]
-  connect_bd_net -net CLK_1 [get_bd_ports CLK] [get_bd_pins mult_gen_0/CLK]
-  connect_bd_net -net mult_gen_0_P [get_bd_ports P] [get_bd_pins mult_gen_0/P]
-  connect_bd_net -net xlconstant_0_dout [get_bd_pins mult_gen_0/B] [get_bd_pins xlconstant_0/dout]
-
-  # Create address segments
-
-
-  # Restore current instance
-  current_bd_instance $oldCurInst
-
-  validate_bd_design
-  save_bd_design
-  close_bd_design $design_name 
-}
-# End of cr_bd_rp_mult_rm50()
-cr_bd_rp_mult_rm50 ""
-set_property REGISTERED_WITH_MANAGER "1" [get_files rp_mult_rm50.bd ] 
-set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_mult_rm50.bd ] 
-
 if { [get_files icap_inst.v] == "" } {
   import_files -quiet -fileset sources_1 "$origin_dir/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"
 }
@@ -938,6 +938,7 @@ proc cr_bd_design_1 { parentCell } {
   if { $bCheckIPs == 1 } {
      set list_check_ips "\ 
   xilinx.com:ip:axi_gpio:2.0\
+  xilinx.com:ip:axi_intc:4.1\
   xilinx.com:ip:dfx_controller:1.0\
   xilinx.com:ip:dfx_decoupler:1.0\
   xilinx.com:ip:proc_sys_reset:5.0\
@@ -992,9 +993,11 @@ proc cr_bd_design_1 { parentCell } {
   ##################################################################
   set bCheckSources 1
   set list_bdc_active "rp_add_rm25, rp_const_rm45, rp_mult_rm5"
+  set list_bdc_dfx "rp_add_rm65, rp_const_rm35, rp_mult_rm50"
 
   array set map_bdc_missing {}
   set map_bdc_missing(ACTIVE) ""
+  set map_bdc_missing(DFX) ""
   set map_bdc_missing(BDC) ""
 
   if { $bCheckSources == 1 } {
@@ -1013,6 +1016,8 @@ proc cr_bd_design_1 { parentCell } {
       if { [can_resolve_reference $src] == 0 } {
          if { [lsearch $list_bdc_active $src] != -1 } {
             set map_bdc_missing(ACTIVE) "$map_bdc_missing(ACTIVE) $src"
+         } elseif { [lsearch $list_bdc_dfx $src] != -1 } {
+            set map_bdc_missing(DFX) "$map_bdc_missing(DFX) $src"
          } else {
             set map_bdc_missing(BDC) "$map_bdc_missing(BDC) $src"
          }
@@ -1021,6 +1026,11 @@ proc cr_bd_design_1 { parentCell } {
 
    if { [llength $map_bdc_missing(ACTIVE)] > 0 } {
       catch {common::send_gid_msg -ssname BD::TCL -id 2057 -severity "ERROR" "The following source(s) of Active variants are not found in the project: $map_bdc_missing(ACTIVE)" }
+      common::send_gid_msg -ssname BD::TCL -id 2060 -severity "INFO" "Please add source files for the missing source(s) above."
+      set bCheckIPsPassed 0
+   }
+   if { [llength $map_bdc_missing(DFX)] > 0 } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2058 -severity "ERROR" "The following source(s) of DFX variants are not found in the project: $map_bdc_missing(DFX)" }
       common::send_gid_msg -ssname BD::TCL -id 2060 -severity "INFO" "Please add source files for the missing source(s) above."
       set bCheckIPsPassed 0
    }
@@ -1094,6 +1104,12 @@ proc cr_bd_design_1 { parentCell } {
   set_property -dict [ list \
    CONFIG.C_ALL_INPUTS {1} \
  ] $axi_gpio_3
+
+  # Create instance: axi_intc_0, and set properties
+  set axi_intc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_intc:4.1 axi_intc_0 ]
+  set_property -dict [ list \
+   CONFIG.C_IRQ_CONNECTION {1} \
+ ] $axi_intc_0
 
   # Create instance: dfx_controller_0, and set properties
   set dfx_controller_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:dfx_controller:1.0 dfx_controller_0 ]
@@ -1195,7 +1211,7 @@ RM_add65 BS {0 {ID 0 ADDR 0 SIZE 0 CLEAR 0}}}} HAS_POR_RM 1 POR_RM RM_add_35}}\
   # Create instance: ps8_0_axi_periph, and set properties
   set ps8_0_axi_periph [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 ps8_0_axi_periph ]
   set_property -dict [ list \
-   CONFIG.NUM_MI {5} \
+   CONFIG.NUM_MI {6} \
    CONFIG.NUM_SI {2} \
  ] $ps8_0_axi_periph
 
@@ -1975,12 +1991,14 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_intf_net -intf_net ps8_0_axi_periph_M02_AXI [get_bd_intf_pins dfx_controller_0/s_axi_reg] [get_bd_intf_pins ps8_0_axi_periph/M02_AXI]
   connect_bd_intf_net -intf_net ps8_0_axi_periph_M03_AXI [get_bd_intf_pins axi_gpio_2/S_AXI] [get_bd_intf_pins ps8_0_axi_periph/M03_AXI]
   connect_bd_intf_net -intf_net ps8_0_axi_periph_M04_AXI [get_bd_intf_pins axi_gpio_3/S_AXI] [get_bd_intf_pins ps8_0_axi_periph/M04_AXI]
+  connect_bd_intf_net -intf_net ps8_0_axi_periph_M05_AXI [get_bd_intf_pins axi_intc_0/s_axi] [get_bd_intf_pins ps8_0_axi_periph/M05_AXI]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/S_AXI_HPC0_FPD]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins ps8_0_axi_periph/S00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD]
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM1_FPD [get_bd_intf_pins ps8_0_axi_periph/S01_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM1_FPD]
 
   # Create port connections
   connect_bd_net -net axi_gpio_2_gpio_io_o [get_bd_pins axi_gpio_2/gpio_io_o] [get_bd_pins rp_mult/A]
+  connect_bd_net -net axi_intc_0_irq [get_bd_pins axi_intc_0/irq] [get_bd_pins zynq_ultra_ps_e_0/pl_ps_irq0]
   connect_bd_net -net dfx_controller_0_vsm_VS_add_rm_decouple [get_bd_pins dfx_controller_0/vsm_VS_add_rm_decouple] [get_bd_pins dfx_decoupler_1/decouple]
   connect_bd_net -net dfx_controller_0_vsm_VS_const_rm_decouple [get_bd_pins dfx_controller_0/vsm_VS_const_rm_decouple] [get_bd_pins dfx_decoupler_0/decouple]
   connect_bd_net -net dfx_controller_0_vsm_VS_mult_rm_decouple [get_bd_pins dfx_controller_0/vsm_VS_mult_rm_decouple] [get_bd_pins dfx_decoupler_2/decouple]
@@ -1989,9 +2007,9 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   connect_bd_net -net dfx_decoupler_2_s_intf_0_DATA [get_bd_pins dfx_decoupler_2/s_intf_0_DATA] [get_bd_pins rp_add/A]
   connect_bd_net -net rp_add_S [get_bd_pins dfx_decoupler_1/rp_intf_0_DATA] [get_bd_pins rp_add/S]
   connect_bd_net -net rp_mult_P [get_bd_pins dfx_decoupler_2/rp_intf_0_DATA] [get_bd_pins rp_mult/P]
-  connect_bd_net -net rst_ps8_0_100M_peripheral_aresetn [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins axi_gpio_1/s_axi_aresetn] [get_bd_pins axi_gpio_2/s_axi_aresetn] [get_bd_pins axi_gpio_3/s_axi_aresetn] [get_bd_pins dfx_controller_0/icap_reset] [get_bd_pins dfx_controller_0/reset] [get_bd_pins ps8_0_axi_periph/ARESETN] [get_bd_pins ps8_0_axi_periph/M00_ARESETN] [get_bd_pins ps8_0_axi_periph/M01_ARESETN] [get_bd_pins ps8_0_axi_periph/M02_ARESETN] [get_bd_pins ps8_0_axi_periph/M03_ARESETN] [get_bd_pins ps8_0_axi_periph/M04_ARESETN] [get_bd_pins ps8_0_axi_periph/S00_ARESETN] [get_bd_pins ps8_0_axi_periph/S01_ARESETN] [get_bd_pins rst_ps8_0_100M/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
+  connect_bd_net -net rst_ps8_0_100M_peripheral_aresetn [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins axi_gpio_1/s_axi_aresetn] [get_bd_pins axi_gpio_2/s_axi_aresetn] [get_bd_pins axi_gpio_3/s_axi_aresetn] [get_bd_pins axi_intc_0/s_axi_aresetn] [get_bd_pins dfx_controller_0/icap_reset] [get_bd_pins dfx_controller_0/reset] [get_bd_pins ps8_0_axi_periph/ARESETN] [get_bd_pins ps8_0_axi_periph/M00_ARESETN] [get_bd_pins ps8_0_axi_periph/M01_ARESETN] [get_bd_pins ps8_0_axi_periph/M02_ARESETN] [get_bd_pins ps8_0_axi_periph/M03_ARESETN] [get_bd_pins ps8_0_axi_periph/M04_ARESETN] [get_bd_pins ps8_0_axi_periph/M05_ARESETN] [get_bd_pins ps8_0_axi_periph/S00_ARESETN] [get_bd_pins ps8_0_axi_periph/S01_ARESETN] [get_bd_pins rst_ps8_0_100M/peripheral_aresetn] [get_bd_pins smartconnect_0/aresetn]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins dfx_decoupler_0/rp_intf_0_DATA] [get_bd_pins rp_const/dout]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_gpio_1/s_axi_aclk] [get_bd_pins axi_gpio_2/s_axi_aclk] [get_bd_pins axi_gpio_3/s_axi_aclk] [get_bd_pins dfx_controller_0/clk] [get_bd_pins dfx_controller_0/icap_clk] [get_bd_pins icap_inst_0/CLK] [get_bd_pins ps8_0_axi_periph/ACLK] [get_bd_pins ps8_0_axi_periph/M00_ACLK] [get_bd_pins ps8_0_axi_periph/M01_ACLK] [get_bd_pins ps8_0_axi_periph/M02_ACLK] [get_bd_pins ps8_0_axi_periph/M03_ACLK] [get_bd_pins ps8_0_axi_periph/M04_ACLK] [get_bd_pins ps8_0_axi_periph/S00_ACLK] [get_bd_pins ps8_0_axi_periph/S01_ACLK] [get_bd_pins rp_add/CLK] [get_bd_pins rp_mult/CLK] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_gpio_1/s_axi_aclk] [get_bd_pins axi_gpio_2/s_axi_aclk] [get_bd_pins axi_gpio_3/s_axi_aclk] [get_bd_pins axi_intc_0/s_axi_aclk] [get_bd_pins dfx_controller_0/clk] [get_bd_pins dfx_controller_0/icap_clk] [get_bd_pins icap_inst_0/CLK] [get_bd_pins ps8_0_axi_periph/ACLK] [get_bd_pins ps8_0_axi_periph/M00_ACLK] [get_bd_pins ps8_0_axi_periph/M01_ACLK] [get_bd_pins ps8_0_axi_periph/M02_ACLK] [get_bd_pins ps8_0_axi_periph/M03_ACLK] [get_bd_pins ps8_0_axi_periph/M04_ACLK] [get_bd_pins ps8_0_axi_periph/M05_ACLK] [get_bd_pins ps8_0_axi_periph/S00_ACLK] [get_bd_pins ps8_0_axi_periph/S01_ACLK] [get_bd_pins rp_add/CLK] [get_bd_pins rp_mult/CLK] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins smartconnect_0/aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm1_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0] [get_bd_pins zynq_ultra_ps_e_0/saxihpc0_fpd_aclk]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_100M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
@@ -2000,6 +2018,7 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_gpio_1/S_AXI/Reg] -force
   assign_bd_address -offset 0xA0030000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_gpio_2/S_AXI/Reg] -force
   assign_bd_address -offset 0xA0040000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_gpio_3/S_AXI/Reg] -force
+  assign_bd_address -offset 0xA0050000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_intc_0/S_AXI/Reg] -force
   assign_bd_address -offset 0xA0020000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs dfx_controller_0/s_axi_reg/Reg] -force
 
   # Exclude Address Segments
@@ -2009,9 +2028,8 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
+  validate_bd_design
   save_bd_design
-common::send_gid_msg -ssname BD::TCL -id 2050 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
-
   close_bd_design $design_name 
 }
 # End of cr_bd_design_1()
