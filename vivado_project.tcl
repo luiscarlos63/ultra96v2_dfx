@@ -29,7 +29,16 @@ proc checkRequiredFiles { origin_dir} {
   }
 
   set files [list \
+ "[file normalize "$origin_dir/src/design/AES_Decrypt.v"]"\
+ "[file normalize "$origin_dir/src/design/addRoundKey.v"]"\
+ "[file normalize "$origin_dir/src/design/decryptRound.v"]"\
+ "[file normalize "$origin_dir/src/design/inverseMixColumns.v"]"\
+ "[file normalize "$origin_dir/src/design/inverseSbox.v"]"\
+ "[file normalize "$origin_dir/src/design/inverseShiftRows.v"]"\
+ "[file normalize "$origin_dir/src/design/inverseSubBytes.v"]"\
+ "[file normalize "$origin_dir/src/design/keyExpansion.v"]"\
  "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"]"\
+ "[file normalize "$origin_dir/src/design/BitDecrypter.v"]"\
   ]
   foreach ifile $files {
     if { ![file isfile $ifile] } {
@@ -156,7 +165,16 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
+ [file normalize "${origin_dir}/src/design/AES_Decrypt.v"] \
+ [file normalize "${origin_dir}/src/design/addRoundKey.v"] \
+ [file normalize "${origin_dir}/src/design/decryptRound.v"] \
+ [file normalize "${origin_dir}/src/design/inverseMixColumns.v"] \
+ [file normalize "${origin_dir}/src/design/inverseSbox.v"] \
+ [file normalize "${origin_dir}/src/design/inverseShiftRows.v"] \
+ [file normalize "${origin_dir}/src/design/inverseSubBytes.v"] \
+ [file normalize "${origin_dir}/src/design/keyExpansion.v"] \
  [file normalize "${origin_dir}/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"] \
+ [file normalize "${origin_dir}/src/design/BitDecrypter.v"] \
 ]
 add_files -norecurse -fileset $obj $files
 
@@ -905,6 +923,30 @@ cr_bd_rp_add_rm25 ""
 set_property REGISTERED_WITH_MANAGER "1" [get_files rp_add_rm25.bd ] 
 set_property SYNTH_CHECKPOINT_MODE "Hierarchical" [get_files rp_add_rm25.bd ] 
 
+if { [get_files AES_Decrypt.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/AES_Decrypt.v"
+}
+if { [get_files addRoundKey.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/addRoundKey.v"
+}
+if { [get_files decryptRound.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/decryptRound.v"
+}
+if { [get_files inverseMixColumns.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/inverseMixColumns.v"
+}
+if { [get_files inverseSbox.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/inverseSbox.v"
+}
+if { [get_files inverseShiftRows.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/inverseShiftRows.v"
+}
+if { [get_files inverseSubBytes.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/inverseSubBytes.v"
+}
+if { [get_files keyExpansion.v] == "" } {
+  import_files -quiet -fileset sources_1 "$origin_dir/src/design/keyExpansion.v"
+}
 if { [get_files icap_inst.v] == "" } {
   import_files -quiet -fileset sources_1 "$origin_dir/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"
 }
@@ -993,11 +1035,9 @@ proc cr_bd_design_1 { parentCell } {
   ##################################################################
   set bCheckSources 1
   set list_bdc_active "rp_add_rm25, rp_const_rm45, rp_mult_rm5"
-  set list_bdc_dfx "rp_add_rm65, rp_const_rm35, rp_mult_rm50"
 
   array set map_bdc_missing {}
   set map_bdc_missing(ACTIVE) ""
-  set map_bdc_missing(DFX) ""
   set map_bdc_missing(BDC) ""
 
   if { $bCheckSources == 1 } {
@@ -1016,8 +1056,6 @@ proc cr_bd_design_1 { parentCell } {
       if { [can_resolve_reference $src] == 0 } {
          if { [lsearch $list_bdc_active $src] != -1 } {
             set map_bdc_missing(ACTIVE) "$map_bdc_missing(ACTIVE) $src"
-         } elseif { [lsearch $list_bdc_dfx $src] != -1 } {
-            set map_bdc_missing(DFX) "$map_bdc_missing(DFX) $src"
          } else {
             set map_bdc_missing(BDC) "$map_bdc_missing(BDC) $src"
          }
@@ -1026,11 +1064,6 @@ proc cr_bd_design_1 { parentCell } {
 
    if { [llength $map_bdc_missing(ACTIVE)] > 0 } {
       catch {common::send_gid_msg -ssname BD::TCL -id 2057 -severity "ERROR" "The following source(s) of Active variants are not found in the project: $map_bdc_missing(ACTIVE)" }
-      common::send_gid_msg -ssname BD::TCL -id 2060 -severity "INFO" "Please add source files for the missing source(s) above."
-      set bCheckIPsPassed 0
-   }
-   if { [llength $map_bdc_missing(DFX)] > 0 } {
-      catch {common::send_gid_msg -ssname BD::TCL -id 2058 -severity "ERROR" "The following source(s) of DFX variants are not found in the project: $map_bdc_missing(DFX)" }
       common::send_gid_msg -ssname BD::TCL -id 2060 -severity "INFO" "Please add source files for the missing source(s) above."
       set bCheckIPsPassed 0
    }
@@ -2028,8 +2061,9 @@ Port;FD4A0000;FD4AFFFF;1|FPD;DPDMA;FD4C0000;FD4CFFFF;1|FPD;DDR_XMPU5_CFG;FD05000
   # Restore current instance
   current_bd_instance $oldCurInst
 
-  validate_bd_design
   save_bd_design
+common::send_gid_msg -ssname BD::TCL -id 2050 -severity "WARNING" "This Tcl script was generated from a block design that has not been validated. It is possible that design <$design_name> may result in errors during validation."
+
   close_bd_design $design_name 
 }
 # End of cr_bd_design_1()
@@ -2064,8 +2098,6 @@ make_wrapper -files [get_files rp_add_rm65.bd] -import -top
 
 # Create wrapper file for rp_mult_rm50.bd
 make_wrapper -files [get_files rp_mult_rm50.bd] -import -top
-
-generate_target all [get_files design_1.bd]
 
 # Empty (no sources present)
 
@@ -2119,6 +2151,7 @@ if { $obj != "" } {
 
 }
 set obj [get_runs synth_1]
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "incremental_checkpoint" -value "$proj_dir/vivado_project.srcs/utils_1/imports/synth_1/icap_inst.dcp" -objects $obj
 set_property -name "auto_incremental_checkpoint" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
@@ -2167,6 +2200,7 @@ if { $obj != "" } {
 }
 set obj [get_runs rp_const_rm45_inst_0_synth_1]
 set_property -name "constrset" -value "rp_const_rm45_inst_0" -objects $obj
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
 # Create 'rp_mult_rm50_inst_0_synth_1' run (if not found)
@@ -2213,6 +2247,7 @@ if { $obj != "" } {
 }
 set obj [get_runs rp_mult_rm5_inst_0_synth_1]
 set_property -name "constrset" -value "rp_mult_rm5_inst_0" -objects $obj
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
 # Create 'rp_add_rm25_inst_0_synth_1' run (if not found)
@@ -2236,6 +2271,7 @@ if { $obj != "" } {
 }
 set obj [get_runs rp_add_rm25_inst_0_synth_1]
 set_property -name "constrset" -value "rp_add_rm25_inst_0" -objects $obj
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Synthesis Defaults" -objects $obj
 
 # Create 'rp_add_rm65_inst_0_synth_1' run (if not found)
@@ -2481,6 +2517,7 @@ set_property -name "options.warn_on_violation" -value "1" -objects $obj
 
 }
 set obj [get_runs impl_1]
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Implementation Defaults" -objects $obj
 set_property -name "steps.write_bitstream.args.bin_file" -value "1" -objects $obj
 set_property -name "steps.write_bitstream.args.readback_file" -value "0" -objects $obj
@@ -4034,6 +4071,7 @@ set_property -name "options.warn_on_violation" -value "1" -objects $obj
 
 }
 set obj [get_runs child_0_impl_1]
+set_property -name "needs_refresh" -value "1" -objects $obj
 set_property -name "strategy" -value "Vivado Implementation Defaults" -objects $obj
 set_property -name "steps.write_bitstream.args.bin_file" -value "1" -objects $obj
 set_property -name "steps.write_bitstream.args.readback_file" -value "0" -objects $obj
