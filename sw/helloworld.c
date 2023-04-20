@@ -218,6 +218,7 @@ int main()
       	 print("\nfile system init failed\n\r");
         	 //return XST_FAILURE;
     }
+//SD_card > DRAM (addr, size)
 
 
 /*
