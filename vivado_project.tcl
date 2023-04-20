@@ -18,10 +18,8 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
- "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/sources_1/new/aes_ecb.v"]"\
  "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/constrs_1/new/constraints.xdc"]"\
  "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/sim_1/new/simple_tets.v"]"\
- "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/sim_1/new/tb_aes_ecb.v"]"\
  "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/utils_1/imports/synth_1/icap_inst.dcp"]"\
   ]
   foreach ifile $files {
@@ -33,13 +31,6 @@ proc checkRequiredFiles { origin_dir} {
 
   set files [list \
  "[file normalize "$origin_dir/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"]"\
- "[file normalize "$origin_dir/src/design/aes_core.v"]"\
- "[file normalize "$origin_dir/src/design/aes_decipher_block.v"]"\
- "[file normalize "$origin_dir/src/design/aes_encipher_block.v"]"\
- "[file normalize "$origin_dir/src/design/aes_inv_sbox.v"]"\
- "[file normalize "$origin_dir/src/design/aes_key_mem.v"]"\
- "[file normalize "$origin_dir/src/design/aes_sbox.v"]"\
- "[file normalize "$origin_dir/src/design/cbc.v"]"\
  "[file normalize "$origin_dir/src/sim/tb_cbc.v"]"\
   ]
   foreach ifile $files {
@@ -169,21 +160,8 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 set obj [get_filesets sources_1]
 set files [list \
  [file normalize "${origin_dir}/vivado_project/vivado_project.srcs/sources_1/imports/design/icap_inst.v"] \
- [file normalize "${origin_dir}/src/design/aes_core.v"] \
- [file normalize "${origin_dir}/src/design/aes_decipher_block.v"] \
- [file normalize "${origin_dir}/src/design/aes_encipher_block.v"] \
- [file normalize "${origin_dir}/src/design/aes_inv_sbox.v"] \
- [file normalize "${origin_dir}/src/design/aes_key_mem.v"] \
- [file normalize "${origin_dir}/src/design/aes_sbox.v"] \
- [file normalize "${origin_dir}/src/design/cbc.v"] \
 ]
 add_files -norecurse -fileset $obj $files
-
-# Add local files from the original project (-no_copy_sources specified)
-set files [list \
- [file normalize "${origin_dir}/vivado_project/vivado_project.srcs/sources_1/new/aes_ecb.v" ]\
-]
-set added_files [add_files -fileset sources_1 $files]
 
 # Set 'sources_1' fileset file properties for remote files
 # None
@@ -231,7 +209,6 @@ add_files -norecurse -fileset $obj $files
 # Add local files from the original project (-no_copy_sources specified)
 set files [list \
  [file normalize "${origin_dir}/vivado_project/vivado_project.srcs/sim_1/new/simple_tets.v" ]\
- [file normalize "${origin_dir}/vivado_project/vivado_project.srcs/sim_1/new/tb_aes_ecb.v" ]\
 ]
 set added_files [add_files -fileset sim_1 $files]
 
